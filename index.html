@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>MidStream FX | Modelo Financiero Zona Franca</title>
+  <meta name="description"
+    content="Modelo financiero interactivo para gestión de comercio exterior en el segmento midstream, Zonas Francas Colombia." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap"
+    rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+  <div class="app-wrapper">
+
+    <!-- ══════════ SIDEBAR ══════════ -->
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M12 3L2 8l10 5 10-5-10-5z" stroke="white" stroke-width="1.8" stroke-linejoin="round" />
+          <path d="M2 16l10 5 10-5" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+          <path d="M2 12l10 5 10-5" stroke="rgba(255,255,255,0.5)" stroke-width="1.8" stroke-linecap="round"
+            stroke-linejoin="round" />
+        </svg>
+      </div>
+      <nav class="sidebar-nav" id="sidebarNav">
+        <button class="nav-item active" data-section="dashboard" onclick="navTo('dashboard',this)">
+          <svg width="20" height="20" fill="none" viewBox="0 0 24 24">
+            <rect x="3" y="3" width="8" height="8" rx="2" stroke="currentColor" stroke-width="1.8" />
+            <rect x="13" y="3" width="8" height="8" rx="2" stroke="currentColor" stroke-width="1.8" />
+            <rect x="3" y="13" width="8" height="8" rx="2" stroke="currentColor" stroke-width="1.8" />
+            <rect x="13" y="13" width="8" height="8" rx="2" stroke="currentColor" stroke-width="1.8" />
+          </svg>
+          <span class="nav-tooltip">Dashboard</span>
+        </button>
+        <button class="nav-item" data-section="supuestos" onclick="navTo('supuestos',this)">
+          <svg width="20" height="20" fill="none" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.8" />
+            <path
+              d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"
+              stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+          </svg>
+          <span class="nav-tooltip">Supuestos</span>
+        </button>
+        <button class="nav-item" data-section="capex" onclick="navTo('capex',this)">
+          <svg width="20" height="20" fill="none" viewBox="0 0 24 24">
+            <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" stroke="currentColor" stroke-width="1.8"
+              stroke-linejoin="round" />
+            <path d="M9 22V12h6v10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+              stroke-linejoin="round" />
+          </svg>
+          <span class="nav-tooltip">CAPEX</span>
+        </button>
+        <button class="nav-item" data-section="opex" onclick="navTo('opex',this)">
+          <svg width="20" height="20" fill="none" viewBox="0 0 24 24">
+            <path d="M12 20V10M6 20V4M18 20v-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+          </svg>
+          <span class="nav-tooltip">OPEX</span>
+        </button>
+        <button class="nav-item" data-section="ingresos" onclick="navTo('ingresos',this)">
+          <svg width="20" height="20" fill="none" viewBox="0 0 24 24">
+            <path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" stroke="currentColor" stroke-width="1.8"
+              stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+          <span class="nav-tooltip">Ingresos</span>
+        </button>
+        <button class="nav-item" data-section="proyecciones" onclick="navTo('proyecciones',this)">
+          <svg width="20" height="20" fill="none" viewBox="0 0 24 24">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" stroke="currentColor" stroke-width="1.8"
+              stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+          <span class="nav-tooltip">Proyecciones</span>
+        </button>
+        <button class="nav-item" data-section="sensibilidades" onclick="navTo('sensibilidades',this)">
+          <svg width="20" height="20" fill="none" viewBox="0 0 24 24">
+            <path d="M3 3v18h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+            <path d="M18 9L13 14l-3-3-5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+              stroke-linejoin="round" />
+          </svg>
+          <span class="nav-tooltip">Sensibilidades</span>
+        </button>
+      </nav>
+      <div class="sidebar-bottom">
+        <button class="nav-item" onclick="exportToExcel()">
+          <svg width="20" height="20" fill="none" viewBox="0 0 24 24">
+            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" stroke="currentColor"
+              stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+          <span class="nav-tooltip">Exportar Excel</span>
+        </button>
+        <button class="nav-item">
+          <svg width="20" height="20" fill="none" viewBox="0 0 24 24">
+            <path d="M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z" stroke="currentColor"
+              stroke-width="1.8" />
+            <path d="M12 8v4l3 3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+          </svg>
+          <span class="nav-tooltip">Configuración</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- ══════════ MAIN AREA ══════════ -->
+    <div class="main-area">
+
+      <!-- TOPBAR -->
+      <header class="topbar">
+        <div class="topbar-search">
+          <svg width="16" height="16" fill="none" viewBox="0 0 24 24">
+            <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="1.8" />
+            <path d="M21 21l-4.35-4.35" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+          </svg>
+          <input type="text" placeholder="Buscar variable, escenario..." id="searchInput" />
+        </div>
+        <button class="topbar-support">
+          <svg width="14" height="14" fill="none" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.8" />
+            <path d="M12 8v4M12 16h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+          </svg>
+          Fuentes: CREG · Zofranca · DIAN
+        </button>
+        <div class="topbar-spacer"></div>
+        <div class="scenario-group">
+          <label>Escenario</label>
+          <select class="scenario-select" id="scenarioSelect" onchange="applyScenario(this.value)">
+            <option value="base">📊 Base</option>
+            <option value="conservador">🔽 Conservador</option>
+            <option value="optimista">🔼 Optimista</option>
+          </select>
+        </div>
+        <button class="btn-export" onclick="exportToExcel()">
+          <svg viewBox="0 0 20 20" fill="none" width="15" height="15">
+            <path d="M4 16l3-3 3 3 4-6 3 3" stroke="white" stroke-width="1.5" stroke-linecap="round"
+              stroke-linejoin="round" />
+            <rect x="2" y="2" width="16" height="16" rx="2.5" stroke="white" stroke-width="1.5" />
+          </svg>
+          Exportar Excel
+        </button>
+        <div class="topbar-avatar">
+          <div class="avatar-img">MF</div>
+          <div class="avatar-info">
+            <div class="avatar-name">Modelo ZF</div>
+            <div class="avatar-role" id="topbar-role">Colombia 2025</div>
+          </div>
+          <span class="badge-premium">PRO</span>
+        </div>
+      </header>
+
+      <!-- ══════════ PAGE CONTENT ══════════ -->
+      <div class="page-content">
+
+        <!-- ════ DASHBOARD ════ -->
+        <section id="section-dashboard" class="section active">
+
+          <!-- Hero Banner -->
+          <div class="hero-banner">
+            <div class="hero-left">
+              <div class="hero-badge">🛢️ Segmento Midstream · Zona Franca Colombia</div>
+              <h1>Modelo Financiero Integral</h1>
+              <p>Gestión de Comercio Exterior · Palermo / Barranquilla · Modelo Inversionista (Compra)</p>
+              <div class="hero-meta">
+                <span class="hero-tag" id="hero-tag-area">📐 Lote 2,000 m² | Bodega 557 m²</span>
+                <span class="hero-tag" id="hero-tag-horizonte">📅 Horizonte 10 años</span>
+                <span class="hero-tag" id="hero-tag-tasa">🏛️ Tasa ZF 20%</span>
+                <span class="hero-tag" id="hero-tag-wacc">💡 WACC 13.24%</span>
+              </div>
+            </div>
+            <div class="hero-right">
+              <div class="hero-stat-pill">
+                <div class="hero-stat-label">Ingresos año 1 (base)</div>
+                <div class="hero-stat-value" id="hero-ingresos">–</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- KPIs -->
+          <div class="kpis-grid">
+            <div class="kpi-card">
+              <div class="kpi-top">
+                <div class="kpi-label" id="lbl-van-years">VAN (10 años)</div>
+                <div class="kpi-icon-wrap">📈</div>
+              </div>
+              <div class="kpi-value" id="display-van">$0</div>
+              <div class="kpi-footer">
+                <span class="kpi-badge neu" id="trend-van">WACC 13.24%</span>
+                <span class="kpi-sub">Valor Presente Neto</span>
+              </div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-top">
+                <div class="kpi-label">TIR del Proyecto</div>
+                <div class="kpi-icon-wrap">🎯</div>
+              </div>
+              <div class="kpi-value" id="display-tir">0%</div>
+              <div class="kpi-footer">
+                <span class="kpi-badge neu" id="trend-tir">vs WACC</span>
+                <span class="kpi-sub">Tasa Interna de Retorno</span>
+              </div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-top">
+                <div class="kpi-label">Payback Descontado</div>
+                <div class="kpi-icon-wrap amber">⏱️</div>
+              </div>
+              <div class="kpi-value" id="display-payback">–</div>
+              <div class="kpi-footer">
+                <span class="kpi-badge neu" id="trend-payback">Período recuperación</span>
+              </div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-top">
+                <div class="kpi-label">EBITDA Año 1</div>
+                <div class="kpi-icon-wrap lime">💰</div>
+              </div>
+              <div class="kpi-value" id="display-ebitda">$0</div>
+              <div class="kpi-footer">
+                <span class="kpi-badge neu" id="trend-ebitda">Margen %</span>
+                <span class="kpi-sub">Resultado operativo</span>
+              </div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-top">
+                <div class="kpi-label">Ingresos Año 1</div>
+                <div class="kpi-icon-wrap green">🏭</div>
+              </div>
+              <div class="kpi-value" id="display-ingresos">$0</div>
+              <div class="kpi-footer">
+                <span class="kpi-badge pos" id="trend-ingresos">Anual COP</span>
+              </div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-top">
+                <div class="kpi-label">CAPEX Total</div>
+                <div class="kpi-icon-wrap">🏗️</div>
+              </div>
+              <div class="kpi-value" id="display-capex">$0</div>
+              <div class="kpi-footer">
+                <span class="kpi-badge neu" id="trend-capex">USD equiv.</span>
+                <span class="kpi-sub">Inversión Año 0</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Charts Row 1: Proyección (wide) + Composición ingresos + Costos -->
+          <div class="charts-row">
+            <div class="card">
+              <div class="card-header">
+                <div>
+                  <div class="card-title">Proyección: Ingresos · OPEX · EBITDA</div>
+                  <div class="card-subtitle" id="subtitle-proyeccion">10 años con inflación acumulada</div>
+                </div>
+                <div class="card-actions">
+                  <div class="leg">
+                    <span class="leg-item"><span class="leg-dot" style="background:#8b5cf6"></span>Ingresos</span>
+                    <span class="leg-item"><span class="leg-dot" style="background:#f87171"></span>OPEX</span>
+                    <span class="leg-item"><span class="leg-dash" style="background:#a3e635"></span>EBITDA</span>
+                  </div>
+                </div>
+              </div>
+              <div class="card-body chart-wrap">
+                <canvas id="chartProyeccion" height="220"></canvas>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">Mix de Ingresos</div>
+                <div class="card-badge">Mensual</div>
+              </div>
+              <div class="card-body chart-wrap">
+                <canvas id="chartIngresos" height="220"></canvas>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">Estructura de Costos</div>
+                <div class="card-badge">Fijo vs Variable</div>
+              </div>
+              <div class="card-body chart-wrap">
+                <canvas id="chartCostos" height="220"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <!-- Charts Row 2: FCL acumulado + Benchmarks -->
+          <div class="charts-row-2col">
+            <div class="card">
+              <div class="card-header">
+                <div>
+                  <div class="card-title">Flujo de Caja Libre Acumulado</div>
+                  <div class="card-subtitle">Desde Año 0 (inversión inicial CAPEX)</div>
+                </div>
+                <div class="card-badge lime">FCL</div>
+              </div>
+              <div class="card-body chart-wrap">
+                <canvas id="chartFCL" height="200"></canvas>
+              </div>
+            </div>
+            <div class="bm-card" style="margin-bottom:0">
+              <h3>📊 Benchmarks Sectoriales Colombia</h3>
+              <div class="bm-items">
+                <div class="bm-item"><span class="bm-label">Margen EBITDA Ocensa 2024</span>
+                  <div class="bm-bar">
+                    <div class="bm-fill" style="width:87%"></div>
+                  </div><span class="bm-val">87%</span>
+                </div>
+                <div class="bm-item"><span class="bm-label">Margen EBITDA Cenit 9M 2025</span>
+                  <div class="bm-bar">
+                    <div class="bm-fill" style="width:40.4%"></div>
+                  </div><span class="bm-val">40.4%</span>
+                </div>
+                <div class="bm-item"><span class="bm-label">ROACE Objetivo LP (Ecopetrol)</span>
+                  <div class="bm-bar">
+                    <div class="bm-fill" style="width:10%"></div>
+                  </div><span class="bm-val">8–10%</span>
+                </div>
+                <div class="bm-item"><span class="bm-label">WACC CREG Referencia</span>
+                  <div class="bm-bar">
+                    <div class="bm-fill" style="width:13.24%"></div>
+                  </div><span class="bm-val">13.24%</span>
+                </div>
+                <div class="bm-item"><span class="bm-label">Costo Ocensa s/imp. (USD/bl)</span>
+                  <div class="bm-bar">
+                    <div class="bm-fill" style="width:9.5%"></div>
+                  </div><span class="bm-val">0.95</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </section><!-- /dashboard -->
+
+        <!-- ════ SUPUESTOS ════ -->
+        <section id="section-supuestos" class="section">
+          <div class="page-title">
+            <div>
+              <h2>⚙️ Supuestos del Modelo</h2>
+              <p>Variables dinámicas — los resultados se actualizan en tiempo real</p>
+            </div>
+          </div>
+          <div class="supuestos-grid">
+            <!-- Macroeconómicos -->
+            <div class="sup-card">
+              <div class="sup-card-title">Macroeconómicos</div>
+              <div class="sup-row">
+                <div class="sup-label">Inflación anual<span id="lbl_inflacion">6.0%</span></div>
+                <div class="input-group"><input type="number" id="s_inflacion" step="0.1" min="0" max="30" value="6.0"
+                    oninput="updateLbl('inflacion','%');recalculate()" /><span class="unit">%</span></div>
+                <input type="range" class="slider" id="sl_inflacion" min="2" max="15" step="0.1" value="6.0"
+                  oninput="syncSlider('inflacion',this.value)" />
+              </div>
+              <div class="sup-row">
+                <div class="sup-label">TRM (COP/USD)<span id="lbl_trm">4,100</span></div>
+                <div class="input-group"><input type="number" id="s_trm" step="50" min="2000" max="8000" value="4100"
+                    oninput="updateLbl('trm','');recalculate()" /><span class="unit">COP</span></div>
+                <input type="range" class="slider" id="sl_trm" min="3000" max="6000" step="50" value="4100"
+                  oninput="syncSlider('trm',this.value)" />
+              </div>
+              <div class="sup-row">
+                <div class="sup-label">IPP proyectado<span id="lbl_ipp">5.5%</span></div>
+                <div class="input-group"><input type="number" id="s_ipp" step="0.1" min="0" max="20" value="5.5"
+                    oninput="updateLbl('ipp','%');recalculate()" /><span class="unit">%</span></div>
+                <input type="range" class="slider" id="sl_ipp" min="1" max="15" step="0.1" value="5.5"
+                  oninput="syncSlider('ipp',this.value)" />
+              </div>
+              <div class="sup-row">
+                <div class="sup-label">Tasa renta Zona Franca<span id="lbl_tasa_zf">20%</span></div>
+                <div class="input-group"><input type="number" id="s_tasa_zf" step="0.5" min="0" max="35" value="20"
+                    oninput="updateLbl('tasa_zf','%');recalculate()" /><span class="unit">%</span></div>
+                <input type="range" class="slider" id="sl_tasa_zf" min="10" max="35" step="0.5" value="20"
+                  oninput="syncSlider('tasa_zf',this.value)" />
+              </div>
+            </div>
+            <!-- Financieros -->
+            <div class="sup-card">
+              <div class="sup-card-title">Financieros</div>
+              <div class="sup-row">
+                <div class="sup-label">WACC / Tasa descuento<span id="lbl_wacc">13.24%</span></div>
+                <div class="input-group"><input type="number" id="s_wacc" step="0.1" min="5" max="25" value="13.24"
+                    oninput="updateLbl('wacc','%');recalculate()" /><span class="unit">%</span></div>
+                <input type="range" class="slider" id="sl_wacc" min="8" max="20" step="0.1" value="13.24"
+                  oninput="syncSlider('wacc',this.value)" />
+              </div>
+              <div class="sup-row">
+                <div class="sup-label">Margen / Retorno capital<span id="lbl_margen">12%</span></div>
+                <div class="input-group"><input type="number" id="s_margen" step="0.5" min="5" max="40" value="12"
+                    oninput="updateLbl('margen','%');recalculate()" /><span class="unit">%</span></div>
+                <input type="range" class="slider" id="sl_margen" min="5" max="30" step="0.5" value="12"
+                  oninput="syncSlider('margen',this.value)" />
+              </div>
+              <div class="sup-row">
+                <div class="sup-label">Horizonte proyección<span id="lbl_horizonte">10 años</span></div>
+                <div class="input-group"><input type="number" id="s_horizonte" step="1" min="5" max="20" value="10"
+                    oninput="updateLbl('horizonte',' años');recalculate()" /><span class="unit">años</span></div>
+                <input type="range" class="slider" id="sl_horizonte" min="5" max="20" step="1" value="10"
+                  oninput="syncSlider('horizonte',this.value)" />
+              </div>
+              <div class="sup-row">
+                <div class="sup-label">Vida útil activos<span id="lbl_vida_util">20 años</span></div>
+                <div class="input-group"><input type="number" id="s_vida_util" step="1" min="10" max="40" value="20"
+                    oninput="updateLbl('vida_util',' años');recalculate()" /><span class="unit">años</span></div>
+                <input type="range" class="slider" id="sl_vida_util" min="10" max="40" step="1" value="20"
+                  oninput="syncSlider('vida_util',this.value)" />
+              </div>
+            </div>
+            <!-- Operativos -->
+            <div class="sup-card">
+              <div class="sup-card-title">Operativos (Oferta PPI)</div>
+              <div class="sup-row">
+                <div class="sup-label">Área Bodega Techada</div>
+                <div class="input-group"><input type="number" id="s_area_bodega" value="557" disabled style="background:#f3f4f6"/><span class="unit">m²</span></div>
+              </div>
+              <div class="sup-row">
+                <div class="sup-label">Área Patio (abierto)</div>
+                <div class="input-group"><input type="number" id="s_area_patio" value="1443" disabled style="background:#f3f4f6"/><span class="unit">m²</span></div>
+              </div>
+              <div class="sup-row">
+                <div class="sup-label">% Ocupación promedio<span id="lbl_ocupacion">70%</span></div>
+                <div class="input-group"><input type="number" id="s_ocupacion" step="1" min="10" max="100" value="70"
+                    oninput="updateLbl('ocupacion','%');recalculate()" /><span class="unit">%</span></div>
+                <input type="range" class="slider" id="sl_ocupacion" min="10" max="100" step="1" value="70"
+                  oninput="syncSlider('ocupacion',this.value)" />
+              </div>
+              <div class="sup-row">
+                <div class="sup-label"># Operaciones DTA/mes<span id="lbl_ops_dta">15 ops</span></div>
+                <div class="input-group"><input type="number" id="s_ops_dta" step="1" min="1" max="100" value="15"
+                    oninput="updateLbl('ops_dta',' ops');recalculate()" /><span class="unit">ops</span></div>
+                <input type="range" class="slider" id="sl_ops_dta" min="1" max="50" step="1" value="15"
+                  oninput="syncSlider('ops_dta',this.value)" />
+              </div>
+              <div class="sup-row">
+                <div class="sup-label">Rotación inventario<span id="lbl_rotacion">4×/año</span></div>
+                <div class="input-group"><input type="number" id="s_rotacion" step="0.5" min="1" max="24" value="4"
+                    oninput="updateLbl('rotacion','×/año');recalculate()" /><span class="unit">×</span></div>
+                <input type="range" class="slider" id="sl_rotacion" min="1" max="12" step="0.5" value="4"
+                  oninput="syncSlider('rotacion',this.value)" />
+              </div>
+            </div>
+            <!-- Tarifas -->
+            <div class="sup-card">
+              <div class="sup-card-title">Tarifas · Servicios y Almacenamiento</div>
+              <div class="sup-row">
+                <div class="sup-label">Tarifa Almacenamiento Bodega (m²)<span id="lbl_tarifa_alm">$15,000</span></div>
+                <div class="input-group"><input type="number" id="s_tarifa_alm" step="500" min="5000" max="50000"
+                    value="15000" oninput="updateLbl('tarifa_alm','',true);recalculate()" /><span
+                    class="unit">COP</span></div>
+                <input type="range" class="slider" id="sl_tarifa_alm" min="5000" max="40000" step="500" value="15000"
+                  oninput="syncSlider('tarifa_alm',this.value)" />
+              </div>
+              <div class="sup-row">
+                <div class="sup-label">Tarifa Almacenamiento Patio (m²)<span id="lbl_tarifa_patio">$5,000</span></div>
+                <div class="input-group"><input type="number" id="s_tarifa_patio" step="500" min="1000" max="25000" value="5000" oninput="updateLbl('tarifa_patio','',true);recalculate()" /><span class="unit">COP</span></div>
+                <input type="range" class="slider" id="sl_tarifa_patio" min="1000" max="25000" step="500" value="5000" oninput="syncSlider('tarifa_patio',this.value)" />
+              </div>
+              <div class="sup-row">
+                <div class="sup-label">Tránsito DTA/operación<span id="lbl_tarifa_dta">$1,500,000</span></div>
+                <div class="input-group"><input type="number" id="s_tarifa_dta" step="50000" min="500000" max="5000000"
+                    value="1500000" oninput="updateLbl('tarifa_dta','',true);recalculate()" /><span
+                    class="unit">COP</span></div>
+                <input type="range" class="slider" id="sl_tarifa_dta" min="500000" max="4000000" step="50000"
+                  value="1500000" oninput="syncSlider('tarifa_dta',this.value)" />
+              </div>
+              <div class="sup-row">
+                <div class="sup-label">Aprobación documentos<span id="lbl_tarifa_docs">$326,300</span></div>
+                <div class="input-group"><input type="number" id="s_tarifa_docs" step="10000" min="100000" max="1000000"
+                    value="326300" oninput="updateLbl('tarifa_docs','',true);recalculate()" /><span
+                    class="unit">COP</span></div>
+                <input type="range" class="slider" id="sl_tarifa_docs" min="100000" max="800000" step="10000"
+                  value="326300" oninput="syncSlider('tarifa_docs',this.value)" />
+              </div>
+              <div class="sup-row">
+                <div class="sup-label">Cross-Docking/operación<span id="lbl_tarifa_cd">$800,000</span></div>
+                <div class="input-group"><input type="number" id="s_tarifa_cd" step="50000" min="200000" max="3000000"
+                    value="800000" oninput="updateLbl('tarifa_cd','',true);recalculate()" /><span
+                    class="unit">COP</span></div>
+                <input type="range" class="slider" id="sl_tarifa_cd" min="200000" max="2000000" step="50000"
+                  value="800000" oninput="syncSlider('tarifa_cd',this.value)" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Comparación escenarios -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">📋 Comparación de Escenarios</div>
+              <div class="card-badge">Todos los escenarios</div>
+            </div>
+            <div class="card-body-flush table-wrap">
+              <table class="fin-table scenario-cols">
+                <thead>
+                  <tr>
+                    <th>Indicador</th>
+                    <th>🔽 Conservador</th>
+                    <th>📊 Base</th>
+                    <th>🔼 Optimista</th>
+                  </tr>
+                </thead>
+                <tbody id="tbodyScenarios"></tbody>
+              </table>
+            </div>
+          </div>
+        </section><!-- /supuestos -->
+
+        <!-- ════ CAPEX ════ -->
+        <section id="section-capex" class="section">
+          <div class="page-title">
+            <div>
+              <h2>🏗️ Inversión Inicial (CAPEX)</h2>
+              <p>Modelo Inversionista — Adquisición Z.F. Palermo + Equipamiento</p>
+            </div>
+          </div>
+          <div class="capex-layout">
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">Desglose de Inversión</div>
+                <div class="card-badge">Año 0</div>
+              </div>
+              <div class="card-body-flush table-wrap">
+                <table class="fin-table">
+                  <thead>
+                    <tr>
+                      <th>Concepto</th>
+                      <th>Cant.</th>
+                      <th>Costo Unit. COP</th>
+                      <th>Total COP</th>
+                      <th>%</th>
+                    </tr>
+                  </thead>
+                  <tbody id="tbodyCapex"></tbody>
+                  <tfoot>
+                    <tr class="tfoot-total">
+                      <td colspan="3"><strong>TOTAL CAPEX</strong></td>
+                      <td id="totalCapex"></td>
+                      <td>100%</td>
+                    </tr>
+                    <tr>
+                      <td colspan="3" style="color:var(--text-muted);font-size:12px;padding:8px 14px">Equivalente USD @
+                        TRM</td>
+                      <td id="totalCapexUSD" style="font-size:12px;color:var(--text-muted);padding:8px 14px"></td>
+                      <td></td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            </div>
+            <div class="capex-chart-col">
+              <div class="card">
+                <div class="card-header">
+                  <div class="card-title">Distribución CAPEX</div>
+                </div>
+                <div class="card-body chart-wrap"><canvas id="chartCapexPie" height="240"></canvas></div>
+              </div>
+              <div class="mini-kpis">
+                <div class="mini-kpi"><span>CAPEX por m²</span><strong id="capexPorM2">$0</strong></div>
+                <div class="mini-kpi"><span>Depreciación anual</span><strong id="depAnual">$0</strong></div>
+                <div class="mini-kpi"><span>Dep / Ingresos Año 1</span><strong id="depPct">0%</strong></div>
+              </div>
+            </div>
+          </div>
+        </section><!-- /capex -->
+
+        <!-- ════ OPEX ════ -->
+        <section id="section-opex" class="section">
+          <div class="page-title">
+            <div>
+              <h2>⚡ Costos Operativos (OPEX)</h2>
+              <p>Estructura mensual de costos fijos y variables operacionales</p>
+            </div>
+          </div>
+          <div class="opex-layout">
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">Detalle de Costos</div>
+                <div class="card-badge">Por mes</div>
+              </div>
+              <div class="card-body-flush table-wrap">
+                <table class="fin-table">
+                  <thead>
+                    <tr>
+                      <th>Concepto</th>
+                      <th>COP/mes</th>
+                      <th>COP/año</th>
+                      <th>% Total</th>
+                    </tr>
+                  </thead>
+                  <tbody id="tbodyOpex"></tbody>
+                  <tfoot>
+                    <tr class="tfoot-total">
+                      <td><strong>TOTAL OPEX</strong></td>
+                      <td id="totalOpexMes"></td>
+                      <td id="totalOpexAnio"></td>
+                      <td>100%</td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            </div>
+            <div class="opex-chart-col">
+              <div class="card">
+                <div class="card-header">
+                  <div class="card-title">Estructura OPEX</div>
+                </div>
+                <div class="card-body chart-wrap"><canvas id="chartOpexPie" height="240"></canvas></div>
+              </div>
+              <div class="mini-kpis">
+                <div class="mini-kpi"><span>OPEX por m²/mes</span><strong id="opexPorM2">$0</strong></div>
+                <div class="mini-kpi"><span>OPEX por m²/año</span><strong id="opexPorM2Anio">$0</strong></div>
+                <div class="mini-kpi"><span>OPEX % sobre ingresos</span><strong id="opexPctIngresos">0%</strong></div>
+              </div>
+            </div>
+          </div>
+        </section><!-- /opex -->
+
+        <!-- ════ INGRESOS ════ -->
+        <section id="section-ingresos" class="section">
+          <div class="page-title">
+            <div>
+              <h2>💰 Estructura de Ingresos</h2>
+              <p>Proyección de ingresos por línea de servicio según ocupación y tarifas vigentes</p>
+            </div>
+          </div>
+          <div class="ingresos-layout">
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">Detalle por Línea de Servicio</div>
+                <div class="card-badge">Mensual / Anual</div>
+              </div>
+              <div class="card-body-flush table-wrap">
+                <table class="fin-table">
+                  <thead>
+                    <tr>
+                      <th>Línea de Servicio</th>
+                      <th>Base Cálculo</th>
+                      <th>COP/mes</th>
+                      <th>COP/año</th>
+                      <th>%</th>
+                    </tr>
+                  </thead>
+                  <tbody id="tbodyIngresos"></tbody>
+                  <tfoot>
+                    <tr class="tfoot-total">
+                      <td colspan="2"><strong>TOTAL INGRESOS</strong></td>
+                      <td id="totalIngresosMes"></td>
+                      <td id="totalIngresosAnio"></td>
+                      <td>100%</td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">Ingresos por Servicio (Anual)</div>
+              </div>
+              <div class="card-body chart-wrap"><canvas id="chartIngresosBar" height="280"></canvas></div>
+            </div>
+          </div>
+          <div class="breakeven-card">
+            <h3>⚖️ Punto de Equilibrio (Break-Even)</h3>
+            <div class="be-grid">
+              <div class="be-item"><span>Ocupación mínima para BE</span><strong id="beOcupacion">0%</strong></div>
+              <div class="be-item"><span>Ingresos mínimos necesarios</span><strong id="beIngresos">$0</strong></div>
+              <div class="be-item"><span>Margen de seguridad actual</span><strong id="beMargen">0%</strong></div>
+              <div class="be-item"><span>Ops DTA mínimas (BE)</span><strong id="beOps">0</strong></div>
+            </div>
+          </div>
+        </section><!-- /ingresos -->
+
+        <!-- ════ PROYECCIONES ════ -->
+        <section id="section-proyecciones" class="section">
+          <div class="page-title">
+            <div>
+              <h2>📈 Proyecciones Financieras (10 años)</h2>
+              <p>Estado de resultados proyectado con inflación acumulada y tasa ZF</p>
+            </div>
+          </div>
+          <div class="card mb-16">
+            <div class="card-header">
+              <div class="card-title">Estado de Resultados Proyectado (P&amp;G)</div>
+              <div class="card-badge" id="badge-proyecciones">10 años</div>
+            </div>
+            <div class="card-body-flush table-wrap">
+              <table class="fin-table" id="tableProyecciones">
+                <thead>
+                  <tr id="headerProyecciones"></tr>
+                </thead>
+                <tbody id="tbodyProyecciones"></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="charts-row-2col">
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">Estado de Resultados (líneas)</div>
+                <div class="leg">
+                  <span class="leg-item"><span class="leg-dot" style="background:#8b5cf6"></span>Ingresos</span>
+                  <span class="leg-item"><span class="leg-dot" style="background:#f87171"></span>OPEX</span>
+                  <span class="leg-item"><span class="leg-dot" style="background:#a3e635"></span>EBITDA</span>
+                  <span class="leg-item"><span class="leg-dot" style="background:#4ade80"></span>Utilidad</span>
+                </div>
+              </div>
+              <div class="card-body chart-wrap"><canvas id="chartPG" height="240"></canvas></div>
+            </div>
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">Margen EBITDA por Año</div>
+              </div>
+              <div class="card-body chart-wrap"><canvas id="chartMargenEbitda" height="240"></canvas></div>
+            </div>
+          </div>
+        </section><!-- /proyecciones -->
+
+        <!-- ════ SENSIBILIDADES ════ -->
+        <section id="section-sensibilidades" class="section">
+          <div class="page-title">
+            <div>
+              <h2>🎛️ Análisis de Sensibilidad</h2>
+              <p>Impacto de variables clave sobre VAN, TIR y Margen EBITDA del proyecto</p>
+            </div>
+          </div>
+          <div class="card mb-16">
+            <div class="card-header">
+              <div class="card-title">Tornado Chart — Impacto en VAN por variación +15% de cada variable</div>
+            </div>
+            <div class="card-body chart-wrap"><canvas id="chartTornado" height="280"></canvas></div>
+          </div>
+          <div class="charts-row-2col">
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">Matriz VAN (COP Billones)</div>
+                <div class="card-badge">Ocup. × Tarifa</div>
+              </div>
+              <div class="card-body sensitivity-section">
+                <div class="matrix-wrapper" id="matrixOcupacion"></div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">Matriz Margen EBITDA Año 1</div>
+                <div class="card-badge">Ocup. × WACC</div>
+              </div>
+              <div class="card-body sensitivity-section">
+                <div class="matrix-wrapper" id="matrixTarifa"></div>
+              </div>
+            </div>
+          </div>
+        </section><!-- /sensibilidades -->
+
+      </div><!-- /page-content -->
+    </div><!-- /main-area -->
+  </div><!-- /app-wrapper -->
+
+  <footer class="footer">
+    <span id="footer-years">🛢️ MidStream FX · Modelo Financiero Zona Franca | Colombia 2025–2035</span>
+    <span>📊 Fuentes: NotebookLM · CREG · Zofranca Cartagena · Ocensa · Cenit Ecopetrol</span>
+  </footer>
+
+  <script src="app.js"></script>
+  <script>
+    // Navegación por sidebar
+    function navTo(section, btn) {
+      document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('section-' + section).classList.add('active');
+    }
+
+    // Labels dinámicos en supuestos
+    function updateLbl(key, unit, currency) {
+      const el = document.getElementById('lbl_' + key);
+      const inp = document.getElementById('s_' + key);
+      if (!el || !inp) return;
+      const v = parseFloat(inp.value);
+      if (currency) {
+        el.textContent = '$' + new Intl.NumberFormat('es-CO').format(v);
+      } else {
+        el.textContent = new Intl.NumberFormat('es-CO').format(v) + unit;
+      }
+    }
+
+    // Sincronizar slider→input y labels
+    function syncSlider(key, val) {
+      const inp = document.getElementById('s_' + key);
+      if (inp) inp.value = val;
+      const lblEl = document.getElementById('lbl_' + key);
+      if (lblEl) {
+        if (['tarifa_alm', 'tarifa_patio', 'tarifa_dta', 'tarifa_docs', 'tarifa_cd'].includes(key)) {
+          lblEl.textContent = '$' + new Intl.NumberFormat('es-CO').format(val);
+        } else if (['area'].includes(key)) {
+          lblEl.textContent = new Intl.NumberFormat('es-CO').format(val) + ' m²';
+        } else if (['horizonte', 'vida_util'].includes(key)) {
+          lblEl.textContent = val + ' años';
+        } else if (['ops_dta'].includes(key)) {
+          lblEl.textContent = val + ' ops';
+        } else if (['rotacion'].includes(key)) {
+          lblEl.textContent = val + '×/año';
+        } else {
+          lblEl.textContent = val + '%';
+        }
+      }
+      recalculate();
+    }
+
+    // Hero stat
+    function updateHeroStat(val) {
+      const el = document.getElementById('hero-ingresos');
+      if (el) el.textContent = val;
+    }
+  </script>
+</body>
+
+</html>
