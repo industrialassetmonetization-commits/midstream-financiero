@@ -873,19 +873,31 @@ async function loadFromSupabase() {
 
   if (error) {
     console.error("Error cargando desde Supabase:", error);
-    return;
-  }
-
-  if (data && data.length > 0) {
+  } else if (data && data.length > 0) {
     data.forEach(dbSc => {
       if (SCENARIOS[dbSc.name]) {
-        // Combinamos el default con lo que viene de la DB
         SCENARIOS[dbSc.name] = { ...SCENARIOS[dbSc.name], ...dbSc.data };
       }
     });
-    // Forzar actualización de la UI con los datos cargados del escenario actual
     applyScenario(currentScenario, false);
   }
+
+  // --- SUSCRIPCIÓN EN TIEMPO REAL ---
+  // Suscribirse a cambios en la tabla 'scenarios' para sincronizar dispositivos
+  sbClient
+    .channel('public:scenarios')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'scenarios' }, payload => {
+      console.log('Cambio detectado en tiempo real:', payload);
+      const newSc = payload.new;
+      if (newSc && SCENARIOS[newSc.name]) {
+        SCENARIOS[newSc.name] = { ...SCENARIOS[newSc.name], ...newSc.data };
+        // Si el cambio es del escenario que estamos viendo, actualizar la UI
+        if (newSc.name === currentScenario) {
+          applyScenario(currentScenario, false);
+        }
+      }
+    })
+    .subscribe();
 }
 
 // ─── RECALCULAR TODO ─────────────────────────────────────────
