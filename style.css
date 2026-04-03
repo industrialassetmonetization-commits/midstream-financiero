@@ -884,6 +884,26 @@ body {
   }
 }
 
+/* Ajustes especiales para pantallas ultra-pequeñas (Ej. 360px) */
+@media (max-width: 460px) {
+  .page-content { padding: 10px; padding-bottom: 90px; }
+  .topbar { padding: 0 10px; }
+  
+  .kpi-card { padding: 10px; }
+  .kpi-value { font-size: 18px; }
+  .kpi-icon-wrap { width: 28px; height: 28px; font-size: 14px; }
+  
+  .hero-banner h1 { font-size: 22px; }
+  .hero-stat-value { font-size: 22px; }
+  .hero-stat-pill { padding: 12px 16px; }
+  
+  .chart-card { padding: 10px; }
+  .data-table th, .data-table td { padding: 8px 10px; font-size: 11px; }
+  
+  .scenario-group { font-size: 11px; }
+  .scenario-select { font-size: 11px; padding: 5px 24px 5px 10px; }
+}
+
 /* En escritorio, ocultar la barra móvil */
 @media (min-width: 781px) {
   .mobile-nav {
