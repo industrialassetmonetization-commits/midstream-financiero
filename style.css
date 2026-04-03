@@ -812,24 +812,45 @@ body {
   :root { --sidebar-w: 0px; }
   .sidebar { display: none; }
   .main-area { margin-left: 0; }
-  .topbar { padding: 0 16px; }
+  .topbar { padding: 0 16px; height: 56px; }
   .page-content { padding: 16px; padding-bottom: 90px; }
   
-  .kpis-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
-  .be-grid { grid-template-columns: repeat(2, 1fr); }
-  .charts-row, .charts-row-2col, .charts-row-equal { grid-template-columns: 1fr; }
+  /* KPIs en Móvil: Grandes y legibles (2x3) */
+  .kpis-grid { 
+    grid-template-columns: repeat(2, 1fr); 
+    gap: 12px; 
+    margin-bottom: 20px;
+  }
+  .kpi-card { padding: 12px 14px; }
+  .kpi-label { font-size: 11px; }
+  .kpi-value { font-size: 20px; margin-bottom: 4px; }
+  .kpi-icon-wrap { width: 32px; height: 32px; font-size: 16px; }
+  .kpi-badge { font-size: 11px; }
+  .kpi-sub { font-size: 11px; }
+
+  /* Gráficos apilados a ancho completo */
+  .charts-row, .charts-row-2col, .charts-row-equal { 
+    grid-template-columns: 1fr !important; 
+    gap: 16px;
+  }
+  .chart-card { min-height: 280px; padding: 16px; }
+
+  /* Tablas con scroll horizontal para no romper diseño */
+  .table-responsive { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 0 -16px; padding: 0 16px; }
+  .data-table { font-size: 13px; }
   
-  /* Barra de navegación inferior móvil */
+  /* Barra de navegación inferior tipo APP */
   .mobile-nav {
     display: flex;
     position: fixed;
     bottom: 0; left: 0; right: 0;
-    height: 68px;
-    background: var(--bg-sidebar);
+    height: 72px;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(12px);
     border-top: 1px solid var(--border);
     z-index: 1000;
-    box-shadow: 0 -4px 12px rgba(0,0,0,0.05);
-    padding: 0 8px;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
+    padding: 0 10px;
     padding-bottom: env(safe-area-inset-bottom);
     align-items: center;
     justify-content: space-around;
@@ -837,19 +858,27 @@ body {
 
   .mobile-nav .nav-item {
     flex: 1;
-    height: 48px;
+    height: 52px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: var(--r-md);
+    border-radius: 12px;
     color: var(--text-muted);
     background: transparent;
     border: none;
+    transition: all 0.2s ease;
+  }
+  
+  .mobile-nav .nav-item svg {
+    width: 24px;
+    height: 24px;
+    stroke-width: 2;
   }
   
   .mobile-nav .nav-item.active {
     color: var(--purple-600);
     background: var(--purple-50);
+    transform: translateY(-2px);
   }
 }
 
