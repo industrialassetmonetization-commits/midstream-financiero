@@ -762,14 +762,61 @@
     <span>📊 Fuentes: NotebookLM · CREG · Zofranca Cartagena · Ocensa · Cenit Ecopetrol</span>
   </footer>
 
+  <!-- Barra de navegación móvil (Sólo aparece en celular) -->
+  <nav class="mobile-nav">
+    <button class="nav-item active" data-section="dashboard" onclick="navTo('dashboard',this)">
+      <svg width="20" height="20" fill="none" viewBox="0 0 24 24">
+        <rect x="3" y="3" width="8" height="8" rx="2" stroke="currentColor" stroke-width="1.8" />
+        <rect x="13" y="3" width="8" height="8" rx="2" stroke="currentColor" stroke-width="1.8" />
+        <rect x="3" y="13" width="8" height="8" rx="2" stroke="currentColor" stroke-width="1.8" />
+        <rect x="13" y="13" width="8" height="8" rx="2" stroke="currentColor" stroke-width="1.8" />
+      </svg>
+    </button>
+    <button class="nav-item" data-section="supuestos" onclick="navTo('supuestos',this)">
+      <svg width="20" height="20" fill="none" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.8" />
+        <path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+      </svg>
+    </button>
+    <button class="nav-item" data-section="capex" onclick="navTo('capex',this)">
+      <svg width="20" height="20" fill="none" viewBox="0 0 24 24">
+        <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" />
+        <path d="M9 22V12h6v10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+    </button>
+    <button class="nav-item" data-section="opex" onclick="navTo('opex',this)">
+      <svg width="20" height="20" fill="none" viewBox="0 0 24 24">
+        <path d="M12 20V10M6 20V4M18 20v-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+      </svg>
+    </button>
+    <button class="nav-item" data-section="ingresos" onclick="navTo('ingresos',this)">
+      <svg width="20" height="20" fill="none" viewBox="0 0 24 24">
+        <path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+    </button>
+    <button class="nav-item" data-section="proyecciones" onclick="navTo('proyecciones',this)">
+      <svg width="20" height="20" fill="none" viewBox="0 0 24 24">
+        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+    </button>
+    <button class="nav-item" data-section="sensibilidades" onclick="navTo('sensibilidades',this)">
+      <svg width="20" height="20" fill="none" viewBox="0 0 24 24">
+        <path d="M3 3v18h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+        <path d="M18 9L13 14l-3-3-5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+    </button>
+  </nav>
+
   <script src="app.js"></script>
   <script>
-    // Navegación por sidebar
+    // Navegación unificada (Sidebar + Mobile Nav)
     function navTo(section, btn) {
       document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
       document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-      btn.classList.add('active');
+      const dataS = btn.getAttribute('data-section') || section;
+      document.querySelectorAll(`.nav-item[data-section="${dataS}"]`).forEach(b => b.classList.add('active'));
       document.getElementById('section-' + section).classList.add('active');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     // Labels dinámicos en supuestos
