@@ -861,6 +861,13 @@ body {
   .chart-wrap { width: 100%; overflow: hidden; }
   .chart-wrap canvas { max-width: 100% !important; height: auto !important; }
 
+  /* Benchmarks Card fix */
+  .bm-card { min-width: 0; max-width: 100%; padding: 16px; overflow: hidden; }
+  .bm-item { gap: 8px; flex-wrap: wrap; }
+  .bm-label { min-width: 0; width: 100%; margin-bottom: -4px; }
+  .bm-bar { width: calc(100% - 50px); flex: none; }
+  .bm-val { min-width: 40px; text-align: right; }
+
   /* Tablas con scroll horizontal interno para no romper diseño */
   .table-responsive { overflow-x: auto; -webkit-overflow-scrolling: touch; width: 100%; }
   .data-table { font-size: 13px; }
