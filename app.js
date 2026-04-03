@@ -849,17 +849,18 @@ function saveToSupabase() {
 
   clearTimeout(saveTimeout);
   saveTimeout = setTimeout(async () => {
-    const s = readSupuestos();
+    // Guardamos los valores RAW (como 6.0 para 6%) para que la UI los lea bien al recargar
+    const rawData = SCENARIOS[currentScenario];
     const { error } = await sbClient
       .from('scenarios')
       .upsert({
         name: currentScenario,
-        data: s,
+        data: rawData,
         updated_at: new Date().toISOString()
       }, { onConflict: 'name' });
 
     if (error) console.error("Error guardando en Supabase:", error);
-    else console.log(`Escenario "${currentScenario}" guardado en la nube.`);
+    else console.log(`Escenario "${currentScenario}" sincronizado en la nube.`);
   }, 1000); 
 }
 
@@ -902,6 +903,9 @@ async function loadFromSupabase() {
 
 // ─── RECALCULAR TODO ─────────────────────────────────────────
 function recalculate() {
+  // Sincronizar UI -> Estado interno (Raw)
+  saveCurrentScenario();
+
   const s = readSupuestos();
   const fin = calcFinancials(s);
   const ing = calcIngresos(s);
