@@ -1,8 +1,14 @@
 // ================================================================
-// MIDSTREAM FX — Motor Financiero Completo
-// Modelo: Comercio Exterior Zona Franca | Colombia 2025-2026
-// Fuente: NotebookLM "Modelo Financiero" + CREG + Zofranca
-// ================================================================
+
+// --- CONFIGURACIÓN SUPABASE ---
+const SB_URL = "https://tgusgdpxpojjznxedzxl.supabase.co";
+const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRndXNnZHB4cG9qanpueGVkenhsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUxNjMyNjcsImV4cCI6MjA5MDczOTI2N30.eq4lIM4_b4VFAs8KYMWaHFp5HBn-sOqZgp3wPxVuPKc";
+let supabase = null;
+let saveTimeout = null;
+
+if (typeof window !== 'undefined' && window.supabase) {
+  supabase = window.supabase.createClient(SB_URL, SB_KEY);
+}
 
 // ─── ESTADO GLOBAL ────────────────────────────────────────────
 const SHEET_ID = '1K4nVJBO9l32ZjPl_uIkEcRrNJQeI_NHMfhemYfDS';
@@ -795,9 +801,11 @@ function saveCurrentScenario() {
 }
 
 // ─── APLICAR ESCENARIO PREDEFINIDO ────────────────────────────
-function applyScenario(name) {
-  // 1. Guardar los ajustes manuales en el escenario que estamos abandonando
-  saveCurrentScenario();
+function applyScenario(name, savePrevious = true) {
+  // 1. Guardar los ajustes manuales en el escenario que estamos abandonando (si aplica)
+  if (savePrevious) {
+    saveCurrentScenario();
+  }
 
   // 2. Cambiar al nuevo escenario
   currentScenario = name;
@@ -835,6 +843,51 @@ function applyScenario(name) {
   recalculate();
 }
 
+// ─── SUPABASE: GUARDAR Y CARGAR ────────────────────────────────
+function saveToSupabase() {
+  if (!supabase) return;
+
+  clearTimeout(saveTimeout);
+  saveTimeout = setTimeout(async () => {
+    const s = readSupuestos();
+    const { error } = await supabase
+      .from('scenarios')
+      .upsert({
+        name: currentScenario,
+        data: s,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'name' });
+
+    if (error) console.error("Error guardando en Supabase:", error);
+    else console.log(`Escenario "${currentScenario}" guardado en la nube.`);
+  }, 1000); 
+}
+
+async function loadFromSupabase() {
+  if (!supabase) return;
+  console.log("Cargando datos desde la nube...");
+
+  const { data, error } = await supabase
+    .from('scenarios')
+    .select('*');
+
+  if (error) {
+    console.error("Error cargando desde Supabase:", error);
+    return;
+  }
+
+  if (data && data.length > 0) {
+    data.forEach(dbSc => {
+      if (SCENARIOS[dbSc.name]) {
+        // Combinamos el default con lo que viene de la DB
+        SCENARIOS[dbSc.name] = { ...SCENARIOS[dbSc.name], ...dbSc.data };
+      }
+    });
+    // Forzar actualización de la UI con los datos cargados del escenario actual
+    applyScenario(currentScenario, false);
+  }
+}
+
 // ─── RECALCULAR TODO ─────────────────────────────────────────
 function recalculate() {
   const s = readSupuestos();
@@ -860,6 +913,9 @@ function recalculate() {
   renderSensitivityMatrices(s);
   renderBreakeven(s);
   renderScenariosComparison();
+
+  // Auto-guardado en Supabase (si está disponible)
+  saveToSupabase();
 }
 
 // ─── EXPORTAR A EXCEL ─────────────────────────────────────────
@@ -993,6 +1049,11 @@ function exportToExcel() {
 }
 
 // ─── INIT ─────────────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+  // Primero intentamos cargar desde la nube
+  if (supabase) {
+    await loadFromSupabase();
+  }
+  // Luego calculamos todo por primera vez
   recalculate();
 });
