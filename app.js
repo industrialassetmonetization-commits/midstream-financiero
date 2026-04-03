@@ -3,11 +3,11 @@
 // --- CONFIGURACIÓN SUPABASE ---
 const SB_URL = "https://tgusgdpxpojjznxedzxl.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRndXNnZHB4cG9qanpueGVkenhsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUxNjMyNjcsImV4cCI6MjA5MDczOTI2N30.eq4lIM4_b4VFAs8KYMWaHFp5HBn-sOqZgp3wPxVuPKc";
-let supabase = null;
+let sbClient = null;
 let saveTimeout = null;
 
 if (typeof window !== 'undefined' && window.supabase) {
-  supabase = window.supabase.createClient(SB_URL, SB_KEY);
+  sbClient = window.supabase.createClient(SB_URL, SB_KEY);
 }
 
 // ─── ESTADO GLOBAL ────────────────────────────────────────────
@@ -845,12 +845,12 @@ function applyScenario(name, savePrevious = true) {
 
 // ─── SUPABASE: GUARDAR Y CARGAR ────────────────────────────────
 function saveToSupabase() {
-  if (!supabase) return;
+  if (!sbClient) return;
 
   clearTimeout(saveTimeout);
   saveTimeout = setTimeout(async () => {
     const s = readSupuestos();
-    const { error } = await supabase
+    const { error } = await sbClient
       .from('scenarios')
       .upsert({
         name: currentScenario,
@@ -864,10 +864,10 @@ function saveToSupabase() {
 }
 
 async function loadFromSupabase() {
-  if (!supabase) return;
+  if (!sbClient) return;
   console.log("Cargando datos desde la nube...");
 
-  const { data, error } = await supabase
+  const { data, error } = await sbClient
     .from('scenarios')
     .select('*');
 
@@ -1051,7 +1051,7 @@ function exportToExcel() {
 // ─── INIT ─────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
   // Primero intentamos cargar desde la nube
-  if (supabase) {
+  if (sbClient) {
     await loadFromSupabase();
   }
   // Luego calculamos todo por primera vez
