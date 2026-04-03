@@ -812,7 +812,10 @@ body {
   :root { --sidebar-w: 0px; }
   .sidebar { display: none; }
   .main-area { margin-left: 0; }
-  .topbar { padding: 0 16px; height: 56px; }
+  .topbar { padding: 0 16px; height: 56px; justify-content: center; }
+  .topbar-search, .topbar-support, .btn-export, .topbar-avatar, .topbar-spacer { display: none !important; }
+  .scenario-group { width: 100%; justify-content: center; }
+  
   .page-content { padding: 16px; padding-bottom: 90px; }
   
   body, html { overflow-x: hidden; width: 100%; }
