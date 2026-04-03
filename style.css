@@ -815,9 +815,11 @@ body {
   .topbar { padding: 0 16px; height: 56px; }
   .page-content { padding: 16px; padding-bottom: 90px; }
   
-  /* KPIs en Móvil: Grandes y legibles (2x3) */
+  body, html { overflow-x: hidden; width: 100%; }
+  
+  /* KPIs en Móvil: Una sola columna */
   .kpis-grid { 
-    grid-template-columns: repeat(2, 1fr); 
+    grid-template-columns: 1fr; 
     gap: 12px; 
     margin-bottom: 20px;
   }
@@ -835,8 +837,8 @@ body {
   }
   .chart-card { min-height: 280px; padding: 16px; }
 
-  /* Tablas con scroll horizontal para no romper diseño */
-  .table-responsive { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 0 -16px; padding: 0 16px; }
+  /* Tablas con scroll horizontal interno para no romper diseño */
+  .table-responsive { overflow-x: auto; -webkit-overflow-scrolling: touch; width: 100%; }
   .data-table { font-size: 13px; }
   
   /* Barra de navegación inferior tipo APP */
