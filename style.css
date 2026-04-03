@@ -175,6 +175,8 @@ body {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  min-width: 0;
+  max-width: 100vw;
 }
 
 /* ══════════════════════════════════════════
@@ -296,7 +298,9 @@ body {
 .page-content {
   flex: 1;
   padding: 24px 28px;
-  max-width: 1600px;
+  max-width: 100vw;
+  min-width: 0;
+  overflow-x: hidden;
 }
 
 /* ─── SECTIONS ──────────────────────────────────────────────── */
@@ -472,6 +476,8 @@ body {
   box-shadow: var(--shadow-sm);
   overflow: hidden;
   transition: box-shadow var(--transition);
+  min-width: 0; /* Importantísimo para que los Canvas no desborden el Grid */
+  max-width: 100%;
 }
 .card:hover { box-shadow: var(--shadow-md); }
 .card.span-2 { grid-column: span 2; }
@@ -847,8 +853,13 @@ body {
   .charts-row, .charts-row-2col, .charts-row-equal { 
     grid-template-columns: 1fr !important; 
     gap: 16px;
+    min-width: 0;
   }
-  .chart-card { min-height: 280px; padding: 16px; }
+  .card { padding: 0; }
+  .card-header { flex-direction: column; align-items: flex-start; gap: 8px; }
+  
+  .chart-wrap { width: 100%; overflow: hidden; }
+  .chart-wrap canvas { max-width: 100% !important; height: auto !important; }
 
   /* Tablas con scroll horizontal interno para no romper diseño */
   .table-responsive { overflow-x: auto; -webkit-overflow-scrolling: touch; width: 100%; }
