@@ -15,7 +15,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <link rel="stylesheet" href="style.css?v=14" />
+  <link rel="stylesheet" href="style.css?v=15" />
 </head>
 
 <body>
@@ -421,11 +421,11 @@
                   oninput="syncSlider('ocupacion',this.value)" />
               </div>
               <div class="sup-row">
-                <div class="sup-label"># Operaciones DTA/mes<span id="lbl_ops_dta">15 ops</span></div>
-                <div class="input-group"><input type="number" id="s_ops_dta" step="1" min="1" max="100" value="15"
-                    oninput="updateLbl('ops_dta',' ops');recalculate()" /><span class="unit">ops</span></div>
-                <input type="range" class="slider" id="sl_ops_dta" min="1" max="50" step="1" value="15"
-                  oninput="syncSlider('ops_dta',this.value)" />
+                <div class="sup-label">Despachos Transporte/mes<span id="lbl_ops_transp">20 despachos</span></div>
+                <div class="input-group"><input type="number" id="s_ops_transp" step="1" min="1" max="100" value="20"
+                    oninput="updateLbl('ops_transp',' despachos');recalculate()" /><span class="unit">desp</span></div>
+                <input type="range" class="slider" id="sl_ops_transp" min="1" max="60" step="1" value="20"
+                  oninput="syncSlider('ops_transp',this.value)" />
               </div>
               <div class="sup-row">
                 <div class="sup-label">Rotación inventario<span id="lbl_rotacion">4×/año</span></div>
@@ -435,9 +435,59 @@
                   oninput="syncSlider('rotacion',this.value)" />
               </div>
             </div>
-            <!-- Tarifas -->
+            <!-- Transporte Terrestre Nacional -->
             <div class="sup-card">
-              <div class="sup-card-title">Tarifas · Servicios y Almacenamiento</div>
+              <div class="sup-card-title">🚛 Transporte Terrestre Nacional (desde ZF)</div>
+              <div class="sup-row">
+                <div class="sup-label">Puerto/Zona Franca de despacho</div>
+                <div class="input-group" style="flex:1">
+                  <select id="s_origen_transp" onchange="updateTransportRate()" style="width:100%;padding:6px 10px;border-radius:8px;border:1.5px solid var(--border);background:var(--surface);color:var(--text-primary);font-family:inherit">
+                    <option value="BAQ">BAQ — Zona Franca Barranquilla</option>
+                    <option value="CTG">CTG — Zona Franca Cartagena</option>
+                  </select>
+                </div>
+              </div>
+              <div class="sup-row">
+                <div class="sup-label">Ciudad / Destino final</div>
+                <div class="input-group" style="flex:1">
+                  <select id="s_destino_transp" onchange="updateTransportRate()" style="width:100%;padding:6px 10px;border-radius:8px;border:1.5px solid var(--border);background:var(--surface);color:var(--text-primary);font-family:inherit">
+                    <option value="EPO">Ecopetrol / El Porvenir</option>
+                    <option value="CCA">Caucasia (Antioquia)</option>
+                    <option value="BOG">Bogotá D.C.</option>
+                    <option value="CQO">Cúcuta / Norte Santander</option>
+                    <option value="CVA">Coveñas — Puerto Terminal</option>
+                    <option value="GRA">Granada (Meta)</option>
+                    <option value="MRF">Mariquita / Fresno (Tolima)</option>
+                    <option value="PBE">Puerto Berrío (Antioquia)</option>
+                    <option value="TUN">Tununguí / Suroeste</option>
+                    <option value="VSA">Villavicencio / Acacías</option>
+                    <option value="CUS">Cusiana / Cupiagua (Casanare)</option>
+                  </select>
+                </div>
+              </div>
+              <div class="sup-row">
+                <div class="sup-label">Tipo de vehículo</div>
+                <div class="input-group" style="flex:1">
+                  <select id="s_tipo_vehiculo" onchange="updateTransportRate()" style="width:100%;padding:6px 10px;border-radius:8px;border:1.5px solid var(--border);background:var(--surface);color:var(--text-primary);font-family:inherit">
+                    <option value="C100">Camión C-100 (hasta ~20 ton)</option>
+                    <option value="C600">Camión C-600 (hasta ~30 ton)</option>
+                    <option value="TURBO">Turbo (hasta ~8 ton)</option>
+                  </select>
+                </div>
+              </div>
+              <div class="sup-row">
+                <div class="sup-label">Tarifa por viaje<span id="lbl_tarifa_transp">$3,294,098</span></div>
+                <div class="input-group"><input type="number" id="s_tarifa_transp" step="50000" min="500000" max="8000000"
+                    value="3294098" oninput="updateLbl('tarifa_transp','',true);recalculate()" /><span class="unit">COP</span></div>
+                <input type="range" class="slider" id="sl_tarifa_transp" min="500000" max="7000000" step="50000" value="3294098"
+                  oninput="syncSlider('tarifa_transp',this.value)" />
+              </div>
+              <div id="transp_rate_hint" class="transp-hint ok">✅ Tarifa OCENSA 2026 — selecciona ruta para auto-calcular</div>
+            </div>
+
+            <!-- Tarifas almacenamiento y CD -->
+            <div class="sup-card">
+              <div class="sup-card-title">Tarifas · Almacenamiento y Cross-Docking</div>
               <div class="sup-row">
                 <div class="sup-label">Tarifa Almacenamiento Bodega (m²)<span id="lbl_tarifa_alm">$15,000</span></div>
                 <div class="input-group"><input type="number" id="s_tarifa_alm" step="500" min="5000" max="50000"
@@ -452,28 +502,34 @@
                 <input type="range" class="slider" id="sl_tarifa_patio" min="1000" max="25000" step="500" value="5000" oninput="syncSlider('tarifa_patio',this.value)" />
               </div>
               <div class="sup-row">
-                <div class="sup-label">Tránsito DTA/operación<span id="lbl_tarifa_dta">$1,500,000</span></div>
-                <div class="input-group"><input type="number" id="s_tarifa_dta" step="50000" min="500000" max="5000000"
-                    value="1500000" oninput="updateLbl('tarifa_dta','',true);recalculate()" /><span
-                    class="unit">COP</span></div>
-                <input type="range" class="slider" id="sl_tarifa_dta" min="500000" max="4000000" step="50000"
-                  value="1500000" oninput="syncSlider('tarifa_dta',this.value)" />
-              </div>
-              <div class="sup-row">
-                <div class="sup-label">Aprobación documentos<span id="lbl_tarifa_docs">$326,300</span></div>
-                <div class="input-group"><input type="number" id="s_tarifa_docs" step="10000" min="100000" max="1000000"
-                    value="326300" oninput="updateLbl('tarifa_docs','',true);recalculate()" /><span
-                    class="unit">COP</span></div>
-                <input type="range" class="slider" id="sl_tarifa_docs" min="100000" max="800000" step="10000"
-                  value="326300" oninput="syncSlider('tarifa_docs',this.value)" />
-              </div>
-              <div class="sup-row">
                 <div class="sup-label">Cross-Docking/operación<span id="lbl_tarifa_cd">$800,000</span></div>
                 <div class="input-group"><input type="number" id="s_tarifa_cd" step="50000" min="200000" max="3000000"
                     value="800000" oninput="updateLbl('tarifa_cd','',true);recalculate()" /><span
                     class="unit">COP</span></div>
                 <input type="range" class="slider" id="sl_tarifa_cd" min="200000" max="2000000" step="50000"
                   value="800000" oninput="syncSlider('tarifa_cd',this.value)" />
+              </div>
+            </div>
+
+            <!-- Manipulación y Valor Agregado en Bodega -->
+            <div class="sup-card">
+              <div class="sup-card-title">📦 Manipulación y Valor Agregado en Bodega</div>
+              <div class="sup-row">
+                <div class="sup-label">Horas de manipulación/mes<span id="lbl_horas_manip">200 horas</span></div>
+                <div class="input-group"><input type="number" id="s_horas_manip" step="10" min="0" max="800" value="200"
+                    oninput="updateLbl('horas_manip',' horas');recalculate()" /><span class="unit">h</span></div>
+                <input type="range" class="slider" id="sl_horas_manip" min="0" max="600" step="10" value="200"
+                  oninput="syncSlider('horas_manip',this.value)" />
+              </div>
+              <div class="sup-row">
+                <div class="sup-label">Tarifa por hora de operación<span id="lbl_tarifa_manip">$120,000</span></div>
+                <div class="input-group"><input type="number" id="s_tarifa_manip" step="5000" min="50000" max="300000"
+                    value="120000" oninput="updateLbl('tarifa_manip','',true);recalculate()" /><span class="unit">COP/h</span></div>
+                <input type="range" class="slider" id="sl_tarifa_manip" min="50000" max="250000" step="5000" value="120000"
+                  oninput="syncSlider('tarifa_manip',this.value)" />
+              </div>
+              <div class="sup-row" style="background:rgba(251,191,36,0.07);border-left:3px solid #fbbf24;border-radius:6px;padding:8px 10px">
+                <div class="sup-label" style="color:var(--text-muted);font-size:12px">⚙️ Jornada máxima diurna = ~200 h/mes (25 días × 8 h). Si horas > 200h/mes, el modelo añade automáticamente el costo de operario extra al OPEX (~$3.5 M/200h adicionales).</div>
               </div>
             </div>
           </div>
@@ -660,7 +716,7 @@
               <div class="be-item"><span>Ocupación mínima para BE</span><strong id="beOcupacion">0%</strong></div>
               <div class="be-item"><span>Ingresos mínimos necesarios</span><strong id="beIngresos">$0</strong></div>
               <div class="be-item"><span>Margen de seguridad actual</span><strong id="beMargen">0%</strong></div>
-              <div class="be-item"><span>Ops DTA mínimas (BE)</span><strong id="beOps">0</strong></div>
+              <div class="be-item"><span>Despachos transporte mín./mes (BE)</span><strong id="beOps">0</strong></div>
             </div>
           </div>
         </section><!-- /ingresos -->
@@ -799,7 +855,7 @@
     </button>
   </nav>
 
-  <script src="app.js?v=5"></script>
+  <script src="app.js?v=6"></script>
   <script>
     // Navegación unificada (Sidebar + Mobile Nav)
     function navTo(section, btn) {
@@ -830,14 +886,16 @@
       if (inp) inp.value = val;
       const lblEl = document.getElementById('lbl_' + key);
       if (lblEl) {
-        if (['tarifa_alm', 'tarifa_patio', 'tarifa_dta', 'tarifa_docs', 'tarifa_cd'].includes(key)) {
+        if (['tarifa_alm', 'tarifa_patio', 'tarifa_cd', 'tarifa_transp', 'tarifa_manip'].includes(key)) {
           lblEl.textContent = '$' + new Intl.NumberFormat('es-CO').format(val);
         } else if (['area'].includes(key)) {
           lblEl.textContent = new Intl.NumberFormat('es-CO').format(val) + ' m²';
         } else if (['horizonte', 'vida_util'].includes(key)) {
           lblEl.textContent = val + ' años';
-        } else if (['ops_dta'].includes(key)) {
-          lblEl.textContent = val + ' ops';
+        } else if (['ops_transp'].includes(key)) {
+          lblEl.textContent = val + ' despachos';
+        } else if (['horas_manip'].includes(key)) {
+          lblEl.textContent = val + ' horas';
         } else if (['rotacion'].includes(key)) {
           lblEl.textContent = val + '×/año';
         } else {

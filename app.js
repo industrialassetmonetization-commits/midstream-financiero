@@ -13,27 +13,109 @@ if (typeof window !== 'undefined' && window.supabase) {
 // ─── ESTADO GLOBAL ────────────────────────────────────────────
 const SHEET_ID = '1K4nVJBO9l32ZjPl_uIkEcRrNJQeI_NHMfhemYfDS';
 
+// ─── TARIFAS TRANSPORTE TERRESTRE (COP/viaje, sin IVA) ─────────
+// Fuente: Oferta OCENSA 2026 Tabla 1 Trayecto Individual
+// Origen BAQ = ZF Barranquilla | CTG = ZF Cartagena
+const TRANSPORT_RATES = {
+  BAQ: {
+    BOG: { C100: null,    C600: 3067464, TURBO: null    },
+    CCA: { C100: 1789354, C600: 2753866, TURBO: 2300598 },
+    CQO: { C100: 2371751, C600: 3030570, TURBO: 2635279 },
+    CVA: { C100: 1185875, C600: 1712931, TURBO: null    },
+    EPO: { C100: 3294098, C600: 4729008, TURBO: 3834330 },
+    GRA: { C100: 2044976, C600: 2879042, TURBO: null    },
+    MRF: { C100: 2939653, C600: 4345574, TURBO: 3578708 },
+    PBE: { C100: 2172787, C600: 2811842, TURBO: 2428409 },
+    TUN: { C100: 2556220, C600: null,    TURBO: null    },
+    VSA: { C100: 2172787, C600: 2811842, TURBO: 2428409 },
+    CUS: { C100: 3294098, C600: 4729008, TURBO: null    }
+  },
+  CTG: {
+    BOG: { C100: null,    C600: null,    TURBO: null    },
+    CCA: { C100: 1789354, C600: 2753866, TURBO: 2253163 },
+    CQO: { C100: 2371751, C600: 3030570, TURBO: null    },
+    CVA: { C100: 1185875, C600: 1581167, TURBO: null    },
+    EPO: { C100: 3294098, C600: 4729008, TURBO: 3834330 },
+    GRA: { C100: 2002812, C600: null,    TURBO: 2503515 },
+    MRF: { C100: 3067464, C600: 4345574, TURBO: 3450897 },
+    PBE: { C100: 2044976, C600: 2939653, TURBO: 2556220 },
+    TUN: { C100: 2556220, C600: null,    TURBO: null    },
+    VSA: { C100: 2108223, C600: 2939653, TURBO: null    },
+    CUS: { C100: 3294098, C600: null,    TURBO: null    }
+  }
+};
+
+const DEST_LABELS = {
+  BOG: 'Bogotá D.C.',
+  CCA: 'Caucasia (Antioquia)',
+  CQO: 'Cúcuta / Norte Santander',
+  CVA: 'Coveñas — Puerto Terminal',
+  EPO: 'Ecopetrol / El Porvenir',
+  GRA: 'Granada (Meta)',
+  MRF: 'Mariquita / Fresno (Tolima)',
+  PBE: 'Puerto Berrío (Antioquia)',
+  TUN: 'Tununguí / Suroeste',
+  VSA: 'Villavicencio / Acacías',
+  CUS: 'Cusiana / Cupiagua (Casanare)'
+};
+
+function getTransportRate(origen, destino, vehiculo) {
+  try {
+    return TRANSPORT_RATES[origen][destino][vehiculo] || null;
+  } catch { return null; }
+}
+
+// Auto-calcula y actualiza tarifa cuando el usuario cambia selectores de ruta
+function updateTransportRate() {
+  const origen = document.getElementById('s_origen_transp')?.value || 'BAQ';
+  const destino = document.getElementById('s_destino_transp')?.value || 'EPO';
+  const vehiculo = document.getElementById('s_tipo_vehiculo')?.value || 'C100';
+  const rate = getTransportRate(origen, destino, vehiculo);
+  const inpTarifa = document.getElementById('s_tarifa_transp');
+  const lblTarifa = document.getElementById('lbl_tarifa_transp');
+  const slTarifa = document.getElementById('sl_tarifa_transp');
+  const hint = document.getElementById('transp_rate_hint');
+
+  if (rate && inpTarifa) {
+    inpTarifa.value = rate;
+    if (slTarifa) slTarifa.value = rate;
+    if (lblTarifa) lblTarifa.textContent = '$' + new Intl.NumberFormat('es-CO').format(rate);
+    if (hint) { hint.textContent = `✅ Tarifa OCENSA 2026: ${new Intl.NumberFormat('es-CO').format(rate)} COP/viaje`; hint.className = 'transp-hint ok'; }
+  } else {
+    if (hint) { hint.textContent = '⚠️ Ruta / vehículo sin tarifa oficial — ingresa manualmente'; hint.className = 'transp-hint warn'; }
+  }
+  recalculate();
+}
+
 const SCENARIOS = {
   base: {
     inflacion: 6.0, trm: 4100, ipp: 5.5, tasa_zf: 20,
     wacc: 13.24, margen: 12, horizonte: 10, vida_util: 20,
-    area_bodega: 557, area_patio: 1443, ocupacion: 70, ops_dta: 15, rotacion: 4,
-    tarifa_alm: 15000, tarifa_patio: 5000, tarifa_dta: 1500000,
-    tarifa_docs: 326300, tarifa_cd: 800000
+    area_bodega: 557, area_patio: 1443, ocupacion: 70, rotacion: 4,
+    tarifa_alm: 15000, tarifa_patio: 5000, tarifa_cd: 800000,
+    // Transporte Terrestre Nacional
+    origen_transp: 'BAQ', destino_transp: 'EPO', tipo_vehiculo: 'C100',
+    ops_transp: 20, tarifa_transp: 3294098,
+    // Manipulación y Valor Agregado en Bodega
+    horas_manip: 200, tarifa_manip: 120000
   },
   conservador: {
     inflacion: 7.0, trm: 4300, ipp: 6.5, tasa_zf: 20,
     wacc: 13.24, margen: 12, horizonte: 10, vida_util: 20,
-    area_bodega: 557, area_patio: 1443, ocupacion: 50, ops_dta: 8, rotacion: 3,
-    tarifa_alm: 12400, tarifa_patio: 3500, tarifa_dta: 1000000,
-    tarifa_docs: 326300, tarifa_cd: 600000
+    area_bodega: 557, area_patio: 1443, ocupacion: 50, rotacion: 3,
+    tarifa_alm: 12400, tarifa_patio: 3500, tarifa_cd: 600000,
+    origen_transp: 'BAQ', destino_transp: 'EPO', tipo_vehiculo: 'C100',
+    ops_transp: 10, tarifa_transp: 3294098,
+    horas_manip: 100, tarifa_manip: 120000
   },
   optimista: {
     inflacion: 5.0, trm: 3900, ipp: 4.5, tasa_zf: 20,
     wacc: 12.0, margen: 12, horizonte: 10, vida_util: 20,
-    area_bodega: 557, area_patio: 1443, ocupacion: 90, ops_dta: 25, rotacion: 6,
-    tarifa_alm: 23500, tarifa_patio: 7000, tarifa_dta: 2500000,
-    tarifa_docs: 326300, tarifa_cd: 1200000
+    area_bodega: 557, area_patio: 1443, ocupacion: 90, rotacion: 6,
+    tarifa_alm: 23500, tarifa_patio: 7000, tarifa_cd: 1200000,
+    origen_transp: 'BAQ', destino_transp: 'CCA', tipo_vehiculo: 'C100',
+    ops_transp: 35, tarifa_transp: 1789354,
+    horas_manip: 300, tarifa_manip: 130000
   }
 };
 
@@ -62,8 +144,7 @@ const OPEX_FIXED = [
 ];
 const OPEX_VAR = [
   { name: 'Materiales de proceso y embalaje', monthly: 1500000, ref: 'Variable con volumen' },
-  { name: 'Gastos operación aduanera (Zofranca)', monthly: 2000000, ref: 'Tarifario 2025' },
-  { name: 'Transporte y logística externa', monthly: 1800000, ref: 'Estimado' },
+  { name: 'Operario extra manipulación (si horas_manip > 200h)', monthly: 0, ref: 'Escala con demanda', dynamic: true },
   { name: 'Honorarios y servicios externos', monthly: 1200000, ref: 'Asesores, tributos' }
 ];
 
@@ -90,6 +171,7 @@ function syncSlider(key, val) {
 
 // ─── LEER SUPUESTOS ───────────────────────────────────────────
 function readSupuestos() {
+  const sel = id => document.getElementById(id)?.value ?? '';
   return {
     inflacion: getVal('s_inflacion') / 100,
     trm: getVal('s_trm'),
@@ -102,13 +184,19 @@ function readSupuestos() {
     area_bodega: getVal('s_area_bodega'),
     area_patio: getVal('s_area_patio'),
     ocupacion: getVal('s_ocupacion') / 100,
-    ops_dta: getVal('s_ops_dta'),
     rotacion: getVal('s_rotacion'),
     tarifa_alm: getVal('s_tarifa_alm'),
     tarifa_patio: getVal('s_tarifa_patio'),
-    tarifa_dta: getVal('s_tarifa_dta'),
-    tarifa_docs: getVal('s_tarifa_docs'),
-    tarifa_cd: getVal('s_tarifa_cd')
+    tarifa_cd: getVal('s_tarifa_cd'),
+    // Transporte Terrestre Nacional
+    origen_transp: sel('s_origen_transp') || 'BAQ',
+    destino_transp: sel('s_destino_transp') || 'EPO',
+    tipo_vehiculo: sel('s_tipo_vehiculo') || 'C100',
+    ops_transp: getVal('s_ops_transp'),
+    tarifa_transp: getVal('s_tarifa_transp'),
+    // Manipulación y valor agregado
+    horas_manip: getVal('s_horas_manip'),
+    tarifa_manip: getVal('s_tarifa_manip')
   };
 }
 
@@ -119,11 +207,22 @@ function calcCapex(s) {
 
 // ─── CALCULAR OPEX ────────────────────────────────────────────
 function calcOpex(s) {
+  // Operario extra: si horas_manip supera 200h/mes (1 operario full-time),
+  // se suma costo salarial proporcional (~$3.500.000/mes/operario)
+  const horasBase = 200;
+  const costoOperario = 3500000;
+  const operariosExtra = Math.max(0, (s.horas_manip - horasBase) / horasBase);
+  const costoManipExtra = operariosExtra * costoOperario;
+
+  // Actualizar dinámicamente el ítem de OPEX_VAR
+  const dynItem = OPEX_VAR.find(r => r.dynamic);
+  if (dynItem) dynItem.monthly = Math.round(costoManipExtra);
+
   const totalFijos = OPEX_FIXED.reduce((acc, r) => acc + r.monthly, 0);
   const totalVars = OPEX_VAR.reduce((acc, r) => acc + r.monthly, 0);
   // Escalar variables con ocupación
   const varEscalado = totalVars * (0.5 + 0.5 * s.ocupacion);
-  return { totalFijos, totalVars: varEscalado, total: totalFijos + varEscalado };
+  return { totalFijos, totalVars: varEscalado, total: totalFijos + varEscalado, costoManipExtra };
 }
 
 // ─── CALCULAR INGRESOS ────────────────────────────────────────
@@ -135,13 +234,18 @@ function calcIngresos(s) {
   const almacenamientoPatio = m2PatioOcupados * s.tarifa_patio;
   const almacenamiento = almacenamientoBodega + almacenamientoPatio;
 
-  const dta = s.ops_dta * s.tarifa_dta;
-  const docs = s.ops_dta * s.tarifa_docs;
-  const crossDocking = s.ops_dta * 0.4 * s.tarifa_cd; // 40% de ops incluyen CD
-  const valorAgregado = almacenamiento * 0.08; // 8% sobre almacenamiento total
-  const total = almacenamiento + dta + docs + crossDocking + valorAgregado;
+  // Transporte Terrestre Nacional: despachos desde ZF a destino final
+  const transporte = (s.ops_transp || 0) * (s.tarifa_transp || 0);
 
-  return { almacenamientoBodega, almacenamientoPatio, almacenamiento, dta, docs, crossDocking, valorAgregado, total };
+  // Cross-Docking: 40% de los despachos de transporte incluyen servicio CD
+  const crossDocking = (s.ops_transp || 0) * 0.4 * (s.tarifa_cd || 0);
+
+  // Manipulación y Valor Agregado en Bodega: picking, acondicionamiento, montacargas
+  const manipulacion = (s.horas_manip || 0) * (s.tarifa_manip || 0);
+
+  const total = almacenamiento + transporte + crossDocking + manipulacion;
+
+  return { almacenamientoBodega, almacenamientoPatio, almacenamiento, transporte, crossDocking, manipulacion, total };
 }
 
 // ─── PROYECCIÓN 10 AÑOS ───────────────────────────────────────
@@ -399,10 +503,9 @@ function renderChartFCL(proj, capex) {
 function renderChartIngresos(ing) {
   const entries = [
     { label: 'Almacenamiento', value: ing.almacenamiento, color: '#8b5cf6' },
-    { label: 'Tránsito DTA', value: ing.dta, color: '#a3e635' },
-    { label: 'Docs Aduaneros', value: ing.docs, color: '#c084fc' },
+    { label: 'Transporte Terrestre', value: ing.transporte, color: '#a3e635' },
     { label: 'Cross-Docking', value: ing.crossDocking, color: '#4ade80' },
-    { label: 'Valor Agregado', value: ing.valorAgregado, color: '#fbbf24' }
+    { label: 'Manipulación / Valor Agregado', value: ing.manipulacion, color: '#fbbf24' }
   ];
   makeChart('chartIngresos', 'doughnut', {
     labels: entries.map(e => e.label),
@@ -414,6 +517,8 @@ function renderChartIngresos(ing) {
     }
   });
 }
+
+
 
 function renderChartCostos() {
   const fixed = OPEX_FIXED.reduce((s, r) => s + r.monthly, 0);
@@ -460,16 +565,15 @@ function renderChartOpexPie(opex) {
 function renderChartIngresosBar(ing) {
   const entries = [
     { label: 'Almacenamiento', value: ing.almacenamiento * 12 },
-    { label: 'Tránsito DTA', value: ing.dta * 12 },
-    { label: 'Docs Aduaneros', value: ing.docs * 12 },
+    { label: 'Transporte Terrestre', value: ing.transporte * 12 },
     { label: 'Cross-Docking', value: ing.crossDocking * 12 },
-    { label: 'Valor Agregado', value: ing.valorAgregado * 12 }
+    { label: 'Manipulación / V.A.', value: ing.manipulacion * 12 }
   ];
   makeChart('chartIngresosBar', 'bar', {
     labels: entries.map(e => e.label),
     datasets: [{
       data: entries.map(e => e.value),
-      backgroundColor: ['#8b5cf6', '#a3e635', '#c084fc', '#4ade80', '#fbbf24'],
+      backgroundColor: ['#8b5cf6', '#a3e635', '#4ade80', '#fbbf24'],
       borderRadius: 8, borderWidth: 0
     }]
   }, {
@@ -477,6 +581,8 @@ function renderChartIngresosBar(ing) {
     indexAxis: 'y'
   });
 }
+
+
 
 function renderChartPG(proj) {
   const labels = proj.map(r => `Año ${r.year}`);
@@ -522,7 +628,7 @@ function renderChartTornado(s) {
     { label: 'Tarifa Almacenamiento', key: 'tarifa_alm', delta: 0.15, unit: '+15%' },
     { label: 'WACC', key: 'wacc', delta: 0.02, unit: '+2pp', inverse: true },
     { label: 'Inflación OPEX', key: 'inflacion', delta: 0.02, unit: '+2pp', inverse: true },
-    { label: 'Tarifas DTA', key: 'tarifa_dta', delta: 0.15, unit: '+15%' },
+    { label: 'Tarifa Transporte', key: 'tarifa_transp', delta: 0.15, unit: '+15%' },
     { label: 'CAPEX Total', key: 'capex_scale', delta: 0.1, unit: '+10%', inverse: true }
   ];
 
@@ -622,13 +728,14 @@ function renderTableIngresos(s) {
   const ing = calcIngresos(s);
   const tbody = $('tbodyIngresos');
   if (!tbody) return;
+  const destLabel = DEST_LABELS[s.destino_transp] || s.destino_transp;
+  const vehicLabel = { C100: 'Camión C-100', C600: 'Camión C-600', TURBO: 'Turbo' }[s.tipo_vehiculo] || s.tipo_vehiculo;
   const rows = [
-    { name: 'Almacenamiento Bodega', base: `${fmt(s.area_bodega * s.ocupacion)} m² × ${fmtCOP(s.tarifa_alm)}/m²`, mes: ing.almacenamientoBodega, anio: ing.almacenamientoBodega * 12 },
-    { name: 'Almacenamiento Patio', base: `${fmt(s.area_patio * s.ocupacion)} m² × ${fmtCOP(s.tarifa_patio)}/m²`, mes: ing.almacenamientoPatio, anio: ing.almacenamientoPatio * 12 },
-    { name: 'Tránsito Aduanero DTA', base: `${fmt(s.ops_dta)} ops × ${fmtCOP(s.tarifa_dta)}/op`, mes: ing.dta, anio: ing.dta * 12 },
-    { name: 'Aprobación de Documentos', base: `${fmt(s.ops_dta)} ops × ${fmtCOP(s.tarifa_docs)}/doc`, mes: ing.docs, anio: ing.docs * 12 },
-    { name: 'Cross-Docking (40% de operaciones)', base: `${fmt(s.ops_dta * 0.4)} ops × ${fmtCOP(s.tarifa_cd)}/op`, mes: ing.crossDocking, anio: ing.crossDocking * 12 },
-    { name: 'Servicios de valor agregado', base: '8% sobre almacenamiento total', mes: ing.valorAgregado, anio: ing.valorAgregado * 12 }
+    { name: 'Almacenamiento en Bodega (ZF)', base: `${fmt(s.area_bodega * s.ocupacion)} m² × ${fmtCOP(s.tarifa_alm)}/m²`, mes: ing.almacenamientoBodega, anio: ing.almacenamientoBodega * 12 },
+    { name: 'Almacenamiento en Patio', base: `${fmt(s.area_patio * s.ocupacion)} m² × ${fmtCOP(s.tarifa_patio)}/m²`, mes: ing.almacenamientoPatio, anio: ing.almacenamientoPatio * 12 },
+    { name: 'Transporte Terrestre Nacional', base: `${fmt(s.ops_transp)} despachos × ${fmtCOP(s.tarifa_transp)}/viaje \u2014 ${s.origen_transp}→${destLabel}`, mes: ing.transporte, anio: ing.transporte * 12 },
+    { name: 'Cross-Docking (40% despachos)', base: `${fmt(s.ops_transp * 0.4)} ops × ${fmtCOP(s.tarifa_cd)}/op`, mes: ing.crossDocking, anio: ing.crossDocking * 12 },
+    { name: 'Manipulación y Valor Agregado en Bodega', base: `${fmt(s.horas_manip)} h/mes × ${fmtCOP(s.tarifa_manip)}/h (picking, acondicionamiento, montacargas)`, mes: ing.manipulacion, anio: ing.manipulacion * 12 }
   ];
   tbody.innerHTML = rows.map(r => `<tr>
     <td>${r.name}</td>
@@ -639,7 +746,13 @@ function renderTableIngresos(s) {
   </tr>`).join('');
   $('totalIngresosMes').textContent = fmtCOP(ing.total);
   $('totalIngresosAnio').textContent = fmtCOP(ing.total * 12);
+
+  // Actualizar etiqueta break-even
+  const be = $('beOps');
+  if (be) be.parentElement.querySelector('span').textContent = 'Despachos mínimos (BE)';
 }
+
+
 
 function renderTableProyecciones(proj, s) {
   const header = $('headerProyecciones');
@@ -778,13 +891,19 @@ function buildSupuestos(sc) {
     area_bodega: sc.area_bodega,
     area_patio: sc.area_patio,
     ocupacion: sc.ocupacion / 100,
-    ops_dta: sc.ops_dta,
     rotacion: sc.rotacion,
     tarifa_alm: sc.tarifa_alm,
     tarifa_patio: sc.tarifa_patio,
-    tarifa_dta: sc.tarifa_dta,
-    tarifa_docs: sc.tarifa_docs,
-    tarifa_cd: sc.tarifa_cd
+    tarifa_cd: sc.tarifa_cd,
+    // Transporte Terrestre Nacional
+    origen_transp: sc.origen_transp || 'BAQ',
+    destino_transp: sc.destino_transp || 'EPO',
+    tipo_vehiculo: sc.tipo_vehiculo || 'C100',
+    ops_transp: sc.ops_transp,
+    tarifa_transp: sc.tarifa_transp,
+    // Manipulación y Valor Agregado
+    horas_manip: sc.horas_manip,
+    tarifa_manip: sc.tarifa_manip
   };
 }
 
@@ -795,7 +914,11 @@ function saveCurrentScenario() {
   Object.keys(sc).forEach(key => {
     const inp = $('s_' + key);
     if (inp) {
-      sc[key] = parseFloat(inp.value) || sc[key];
+      if (typeof sc[key] === 'string') {
+        sc[key] = inp.value || sc[key]; // Para selects de texto
+      } else {
+        sc[key] = parseFloat(inp.value) || sc[key];
+      }
     }
   });
 }
@@ -815,16 +938,20 @@ function applyScenario(name, savePrevious = true) {
   Object.entries(sc).forEach(([key, val]) => {
     const inp = $('s_' + key);
     const sl = $('sl_' + key);
+    // Para selects (strings) solo asignar el value, no el slider
+    if (inp && typeof val === 'string') { inp.value = val; return; }
     if (inp) inp.value = val;
     if (sl) sl.value = val;
 
     // Actualizar las etiquetas de texto de ayuda
     const lblEl = $('lbl_' + key);
     if (lblEl) {
-      if (['tarifa_alm', 'tarifa_patio', 'tarifa_dta', 'tarifa_docs', 'tarifa_cd'].includes(key)) {
+      if (['tarifa_alm', 'tarifa_patio', 'tarifa_cd', 'tarifa_transp', 'tarifa_manip'].includes(key)) {
         lblEl.textContent = '$' + new Intl.NumberFormat('es-CO').format(val);
-      } else if (['ops_dta'].includes(key)) {
-        lblEl.textContent = val + ' ops';
+      } else if (['ops_transp'].includes(key)) {
+        lblEl.textContent = val + ' despachos';
+      } else if (['horas_manip'].includes(key)) {
+        lblEl.textContent = val + ' horas';
       } else if (['rotacion'].includes(key)) {
         lblEl.textContent = val + '×/año';
       } else if (['trm'].includes(key)) {
@@ -833,7 +960,7 @@ function applyScenario(name, savePrevious = true) {
         lblEl.textContent = new Intl.NumberFormat('es-CO').format(val) + ' m²';
       } else if (['horizonte', 'vida_util'].includes(key)) {
         lblEl.textContent = val + ' años';
-      } else {
+      } else if (typeof val === 'number') {
         lblEl.textContent = val + '%';
       }
     }
@@ -877,35 +1004,87 @@ async function loadFromSupabase() {
   } else if (data && data.length > 0) {
     data.forEach(dbSc => {
       if (SCENARIOS[dbSc.name]) {
-        SCENARIOS[dbSc.name] = { ...SCENARIOS[dbSc.name], ...dbSc.data };
+        let loaded = { ...dbSc.data };
+        // ── FIX: detectar porcentajes guardados en formato decimal (stale data)
+        // Si inflacion < 1, todos los % están en decimal: multiplicar × 100
+        const PCT_FIELDS = ['inflacion', 'ipp', 'tasa_zf', 'wacc', 'margen', 'ocupacion'];
+        if (typeof loaded.inflacion === 'number' && loaded.inflacion < 1) {
+          PCT_FIELDS.forEach(k => {
+            if (typeof loaded[k] === 'number') loaded[k] = +(loaded[k] * 100).toFixed(4);
+          });
+          console.warn(`Escenario "${dbSc.name}" tenia porcentajes en decimal — auto-corregido.`);
+        }
+        SCENARIOS[dbSc.name] = { ...SCENARIOS[dbSc.name], ...loaded };
       }
     });
     applyScenario(currentScenario, false);
   }
 
   // --- SUSCRIPCIÓN EN TIEMPO REAL ---
-  // Suscribirse a cambios en la tabla 'scenarios' para sincronizar dispositivos
   sbClient
     .channel('public:scenarios')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'scenarios' }, payload => {
       console.log('Cambio detectado en tiempo real:', payload);
       const newSc = payload.new;
       if (newSc && SCENARIOS[newSc.name]) {
-        SCENARIOS[newSc.name] = { ...SCENARIOS[newSc.name], ...newSc.data };
-        // Si el cambio es del escenario que estamos viendo, actualizar la UI
-        if (newSc.name === currentScenario) {
-          applyScenario(currentScenario, false);
+        let loaded = { ...newSc.data };
+        const PCT_FIELDS = ['inflacion', 'ipp', 'tasa_zf', 'wacc', 'margen', 'ocupacion'];
+        if (typeof loaded.inflacion === 'number' && loaded.inflacion < 1) {
+          PCT_FIELDS.forEach(k => { if (typeof loaded[k] === 'number') loaded[k] = +(loaded[k] * 100).toFixed(4); });
         }
+        SCENARIOS[newSc.name] = { ...SCENARIOS[newSc.name], ...loaded };
+        if (newSc.name === currentScenario) applyScenario(currentScenario, false);
       }
     })
     .subscribe();
 }
 
-// ─── RECALCULAR TODO ─────────────────────────────────────────
-function recalculate() {
-  // Sincronizar UI -> Estado interno (Raw)
-  saveCurrentScenario();
+function renderBreakeven(s) {
+  const ing = calcIngresos(s);
+  const opex = calcOpex(s);
+  const opexMes = opex.total;
 
+  // Ingresos fijos (Almacenamiento y Patio)
+  const ingFijo = (ing.det.alm || 0) + (ing.det.patio || 0);
+  
+  // Déficit a cubrir con servicios variables
+  const deficit = Math.max(0, opexMes - ingFijo);
+
+  // Margen ponderado por despacho de transporte + manipulación (simplificado para el BE)
+  // Calculamos ingresos de servicios variables por mes y dividimos por ops_transp
+  const ingVar = (ing.det.transp || 0) + (ing.det.manip || 0) + (ing.det.cd || 0);
+  const unitMargin = s.ops_transp > 0 ? ingVar / s.ops_transp : ing.det.transp; 
+
+  const beOps = unitMargin > 0 ? Math.ceil(deficit / unitMargin) : 0;
+  const beOcupacion = (opexMes > 0) ? (opexMes / (ing.total / (s.ocupacion || 0.01))) * 100 : 0;
+
+  $('beOps').textContent = beOps;
+  $('beIngresos').textContent = fmtCOP(opexMes);
+  $('beOcupacion').textContent = fmtPct(Math.min(100, beOcupacion));
+}
+
+// Auto-guardado en Supabase (si está disponible)
+function saveToSupabase() {
+  if (!sbClient) return;
+
+  clearTimeout(saveTimeout);
+  saveTimeout = setTimeout(async () => {
+    const rawData = SCENARIOS[currentScenario];
+    const { error } = await sbClient
+      .from('scenarios')
+      .upsert({
+        name: currentScenario,
+        data: rawData,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'name' });
+
+    if (error) console.error("Error guardando en Supabase:", error);
+    else console.log(`Escenario "${currentScenario}" sincronizado en la nube.`);
+  }, 1000); 
+}
+
+function recalculate() {
+  saveCurrentScenario();
   const s = readSupuestos();
   const fin = calcFinancials(s);
   const ing = calcIngresos(s);
@@ -930,7 +1109,6 @@ function recalculate() {
   renderBreakeven(s);
   renderScenariosComparison();
 
-  // Auto-guardado en Supabase (si está disponible)
   saveToSupabase();
 }
 
@@ -956,9 +1134,14 @@ function exportToExcel() {
     ['Margen utilidad (capital)', s.margen * 100, '%'],
     ['Horizonte proyección', s.horizonte, 'años'],
     ['Vida útil activos', s.vida_util, 'años'],
-    ['Área de bodega', s.area, 'm²'],
+    ['Área de bodega', s.area_bodega, 'm²'],
+    ['Área de patio', s.area_patio, 'm²'],
     ['% Ocupación promedio', s.ocupacion * 100, '%'],
-    ['# Operaciones DTA/mes', s.ops_dta, 'ops'],
+    ['Despachos Transporte/mes', s.ops_transp, 'viajes'],
+    ['Destino Transporte', s.destino_transp, '-'],
+    ['Tarifa Transporte', s.tarifa_transp, 'COP'],
+    ['Horas Manipulación/mes', s.horas_manip, 'h'],
+    ['Tarifa Manipulación', s.tarifa_manip, 'COP'],
     ['Rotación inventario', s.rotacion, 'veces/año'],
     ['Tarifa almacenamiento', s.tarifa_alm, 'COP/m²/mes'],
     ['Tarifa DTA por operación', s.tarifa_dta, 'COP'],
